@@ -1,0 +1,80 @@
+version: "3.1"
+services:
+  baseimage:
+    build: ./alpine
+    container_name: base-alpine
+
+  nginx:
+    build: ./nginx
+    container_name: dnmp-nginx-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./www/:/var/www/html/:rw
+      - ./nginx/etc/vhost/:/apps/nginx/conf/vhost/:rw
+      - ./nginx/etc/nginx.conf:/apps/nginx/conf/nginx.conf:rw
+      - ./nginx/log:/var/log/dnmp/:rw
+    networks:
+      - net-php72
+      - net-php56
+
+  php72:
+    build: ./php/php72/
+    container_name: dnmp-php72-alpine
+    expose:
+      - "9000"
+    volumes:
+      - ./www/:/var/www/html/:rw
+      - ./php/php72/etc/php.ini:/usr/local/etc/php/php.ini:rw
+      - ./php/php72/etc/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf:rw
+      - ./php/php72/log:/var/log/dnmp/:rw
+    networks:
+      - net-php72
+      - net-php56
+      - net-mysql
+      - net-redis
+
+  php56:
+    build: ./php/php56/
+    container_name: dnmp-php56-alpine
+    expose:
+      - "9000"
+    volumes:
+      - ./www/:/var/www/html/:rw
+      - ./php/php56/etc/php.ini:/usr/local/etc/php/php.ini:rw
+      - ./php/php56/etc/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf:rw
+      - ./php/php56/log:/var/log/dnmp/:rw
+    networks:
+      - net-php72
+      - net-php56
+      - net-mysql
+      - net-redis
+
+  mysql:
+    image: mysql:5.7
+    container_name: dnmp-mysql5.7-alpine
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/etc/my.cnf:/etc/mysql/my.cnf:rw
+      - ./mysql/data/:/var/lib/mysql/:rw
+      - ./mysql/log/:/var/log/dnmp/:rw
+    networks:
+      - net-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+
+  redis:
+    image: redis:latest
+    container_name: dnmp-redis-alpine
+    networks:
+      - net-redis
+    ports:
+      - "6379:6379"
+
+networks:
+  net-mysql:
+  net-redis:
+  net-php72:
+  net-php56:
